@@ -100,14 +100,54 @@ Output: Top K Recommendations
 
 ```mermaid
 flowchart TD
-    A["User Preferences\n(favorite_genre, favorite_mood,\ntarget_energy, likes_acoustic)"] --> B["load_songs\ndata/songs.csv"]
-    B --> C["18-song catalog"]
-    C --> D{"For each song\nin catalog"}
-    D --> E["Scoring Rule\nscore = genre×3.0 + mood×2.0\n+ 1.5×energy_proximity\n+ acoustic_bonus×1.0"]
-    E --> F["Collect scored songs\nlist of (song, score) pairs"]
-    F --> G["Ranking Rule\nSort by score descending"]
-    G --> H["Return Top K songs"]
-    H --> I["Display: title, artist,\nscore, explanation"]
+    A([🎧 User Taste Profile]) --> B
+
+    subgraph INPUT["📥 INPUT"]
+        B["favorite_genre
+        favorite_mood
+        target_energy
+        likes_acoustic"]
+    end
+
+    INPUT --> C
+
+    subgraph LOAD["📂 LOAD DATA"]
+        C["Read data/songs.csv
+        18 songs → list of dicts"]
+    end
+
+    LOAD --> D
+
+    subgraph SCORE["⚙️ SCORING LOOP — for each song"]
+        D["Genre match?"] -->|"+3.0 pts"| E["Mood match?"]
+        E -->|"+2.0 pts"| F["Energy proximity
+        1.5 × (1 − |target − song.energy|)"]
+        F -->|"+0.0 to +1.5 pts"| G["Acoustic bonus?
+        likes_acoustic = True
+        AND acousticness ≥ 0.6"]
+        G -->|"+1.0 pts"| H(["Final Score
+        max = 7.5"])
+    end
+
+    SCORE --> I
+
+    subgraph RANK["📊 RANKING RULE"]
+        I["Sort all songs by score
+        highest → lowest"]
+    end
+
+    RANK --> J
+
+    subgraph OUTPUT["🎵 OUTPUT"]
+        J["Top K Recommendations
+        title · artist · score · explanation"]
+    end
+
+    style INPUT fill:#dbeafe,stroke:#3b82f6,color:#000
+    style LOAD  fill:#fef9c3,stroke:#eab308,color:#000
+    style SCORE fill:#dcfce7,stroke:#22c55e,color:#000
+    style RANK  fill:#fce7f3,stroke:#ec4899,color:#000
+    style OUTPUT fill:#ede9fe,stroke:#8b5cf6,color:#000
 ```
 
 ### Why we need both a Scoring Rule and a Ranking Rule
