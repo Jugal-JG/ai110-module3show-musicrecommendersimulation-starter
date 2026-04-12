@@ -204,6 +204,60 @@ You can add more tests in `tests/test_recommender.py`.
 
 ---
 
+## CLI Output (Terminal Screenshot)
+
+Running `python -m src.main` with the default `pop/happy/0.80` profile produces:
+
+```
+Loaded songs: 18
+
+User profile: genre='pop'  mood='happy'  energy=0.8  likes_acoustic=False
+
+=======================================================
+  TOP RECOMMENDATIONS
+=======================================================
+
+#1  Sunrise City  -  Neon Echo
+    Genre: pop  |  Mood: happy  |  Energy: 0.82
+    Score: 6.47 / 7.50
+    Why recommended:
+      - genre match (+3.0)
+      - mood match (+2.0)
+      - energy proximity (+1.47)
+
+#2  Gym Hero  -  Max Pulse
+    Genre: pop  |  Mood: intense  |  Energy: 0.93
+    Score: 4.30 / 7.50
+    Why recommended:
+      - genre match (+3.0)
+      - energy proximity (+1.3)
+
+#3  Rooftop Lights  -  Indigo Parade
+    Genre: indie pop  |  Mood: happy  |  Energy: 0.76
+    Score: 3.44 / 7.50
+    Why recommended:
+      - mood match (+2.0)
+      - energy proximity (+1.44)
+
+#4  Crowd Surfer  -  Volt Pack
+    Genre: hip-hop  |  Mood: intense  |  Energy: 0.85
+    Score: 1.43 / 7.50
+    Why recommended:
+      - energy proximity (+1.43)
+
+#5  Night Drive Loop  -  Neon Echo
+    Genre: synthwave  |  Mood: moody  |  Energy: 0.75
+    Score: 1.42 / 7.50
+    Why recommended:
+      - energy proximity (+1.42)
+
+=======================================================
+```
+
+The top result matches expectation: *Sunrise City* hits genre + mood + near-perfect energy for a pop/happy listener. Results 4 and 5 have no genre or mood match — they appear only because their energy is closest to 0.80 among the remaining songs.
+
+---
+
 ## Experiments You Tried
 
 - **Reducing the genre weight from 3.0 to 1.0**: The top results started mixing genres more freely. A "pop/happy" user got lofi and indie pop songs almost as often as pure pop, since mood and energy now dominated. This felt less precise but more "serendipitous."
@@ -215,7 +269,7 @@ You can add more tests in `tests/test_recommender.py`.
 
 ## Limitations and Risks
 
-- **Tiny catalog**: With only 10 songs, results are easy to predict and there is almost no diversity pressure.
+- **Small catalog**: With only 18 songs, results are easy to predict and there is limited diversity pressure.
 - **No collaborative signal**: The system never learns from what other users liked — a cold-start problem for new users with unusual tastes.
 - **Genre mismatch penalty is hard**: If your favorite genre is not in the catalog (e.g., "country"), no song ever scores the genre bonus, skewing all recommendations toward energy/mood.
 - **Binary acoustic preference**: `likes_acoustic` is a simple boolean; in reality, acoustic preference is a spectrum.

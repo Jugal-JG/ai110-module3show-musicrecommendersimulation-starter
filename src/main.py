@@ -1,19 +1,14 @@
 """
 Command line runner for the Music Recommender Simulation.
 
-This file helps you quickly run and test your recommender.
-
-You will implement the functions in recommender.py:
-- load_songs
-- score_song
-- recommend_songs
+Run with:  python -m src.main
 """
 
 from src.recommender import load_songs, recommend_songs
 
 
 # ---------------------------------------------------------------------------
-# Step 2: User Taste Profile
+# User Taste Profile
 #
 # This dictionary is the "taste profile" the recommender uses for comparisons.
 # It defines a specific listener's preferences as target values for the
@@ -34,24 +29,38 @@ from src.recommender import load_songs, recommend_songs
 # ---------------------------------------------------------------------------
 
 user_prefs = {
-    "genre":         "pop",    # favorite_genre  — string match, +3.0 pts
-    "mood":          "happy",  # favorite_mood   — string match, +2.0 pts
-    "energy":        0.80,     # target_energy   — float 0-1, proximity scored
-    "likes_acoustic": False,   # acoustic bonus  — +1.0 if True & acousticness >= 0.6
+    "genre":          "pop",    # favorite_genre  — string match, +3.0 pts
+    "mood":           "happy",  # favorite_mood   — string match, +2.0 pts
+    "energy":         0.80,     # target_energy   — float 0-1, proximity scored
+    "likes_acoustic": False,    # acoustic bonus  — +1.0 if True & acousticness >= 0.6
 }
 
 
 def main() -> None:
+    """Load the song catalog, run the recommender, and print ranked results to the terminal."""
     songs = load_songs("data/songs.csv")
+    print(f"Loaded songs: {len(songs)}")
+
+    print(f"\nUser profile: genre={user_prefs['genre']!r}  "
+          f"mood={user_prefs['mood']!r}  "
+          f"energy={user_prefs['energy']}  "
+          f"likes_acoustic={user_prefs['likes_acoustic']}")
 
     recommendations = recommend_songs(user_prefs, songs, k=5)
 
-    print("\nTop recommendations:\n")
-    for rec in recommendations:
-        song, score, explanation = rec
-        print(f"{song['title']} by {song['artist']} ({song['genre']}, {song['mood']}) — Score: {score:.2f}")
-        print(f"  {explanation}")
-        print()
+    print("\n" + "=" * 55)
+    print("  TOP RECOMMENDATIONS")
+    print("=" * 55)
+
+    for rank, (song, score, reasons) in enumerate(recommendations, start=1):
+        print(f"\n#{rank}  {song['title']}  -  {song['artist']}")
+        print(f"    Genre: {song['genre']}  |  Mood: {song['mood']}  |  Energy: {song['energy']}")
+        print(f"    Score: {score:.2f} / 7.50")
+        print(f"    Why recommended:")
+        for reason in reasons:
+            print(f"      - {reason}")
+
+    print("\n" + "=" * 55)
 
 
 if __name__ == "__main__":
