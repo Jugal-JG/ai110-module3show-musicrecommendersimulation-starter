@@ -50,6 +50,23 @@ score = genre_match * 3.0
 
 Songs are ranked by score descending; the top `k` are returned as recommendations.
 
+### Why we need both a Scoring Rule and a Ranking Rule
+
+A **Scoring Rule** answers the question: *"How good is this one song for this one user?"* It takes a single song and a user profile and returns a number. On its own, a scoring rule cannot make a recommendation — it has no awareness of other songs in the catalog.
+
+A **Ranking Rule** answers the question: *"Given all the songs, which ones should I actually show?"* It applies the scoring rule to every song in the catalog, collects all the scores, and sorts them so the best matches rise to the top. It then picks the top `k` to return.
+
+You need both because they solve different sub-problems:
+
+| | Scoring Rule | Ranking Rule |
+|---|---|---|
+| Input | one song + one user | all songs + one user |
+| Output | a single number (score) | an ordered list of songs |
+| Question answered | "Is this song a good match?" | "Which songs are the best matches?" |
+| Code location | `Recommender._score()` / `_score_song()` | `Recommender.recommend()` / `recommend_songs()` |
+
+Without the Scoring Rule, the Ranking Rule has nothing to sort by. Without the Ranking Rule, the Scoring Rule can only evaluate one song at a time and never produces a useful recommendation list. Together they form the complete pipeline: **score every song → sort → return top-k**.
+
 ---
 
 ## Getting Started
