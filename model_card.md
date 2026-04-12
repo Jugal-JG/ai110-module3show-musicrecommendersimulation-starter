@@ -36,15 +36,15 @@ After scoring every song, the system sorts them from highest to lowest score and
 
 ## 4. Data
 
-The catalog is stored in `data/songs.csv` and contains **10 songs**.
+The catalog is stored in `data/songs.csv` and contains **18 songs** (10 starter + 8 added to cover missing genres).
 
 | Attribute | Values present |
 |---|---|
-| Genres | pop (2), lofi (2), rock (1), ambient (1), jazz (1), synthwave (1), indie pop (1) |
-| Moods | happy (2), chill (2), intense (2), relaxed (1), moody (1), focused (1) |
-| Energy range | 0.28 (Spacewalk Thoughts) – 0.93 (Gym Hero) |
+| Genres | pop (2), lofi (3), rock (1), ambient (1), jazz (1), synthwave (1), indie pop (1), r&b (1), hip-hop (1), country (1), blues (1), classical (1), edm (1), folk (1), metal (1) |
+| Moods | happy (2), chill (2), intense (3), relaxed (1), moody (1), focused (1), romantic (1), nostalgic (2), melancholic (1), peaceful (1), euphoric (1) |
+| Energy range | 0.22 (Velvet Morning) – 0.97 (Iron Curtain) |
 
-No songs were added or removed from the starter dataset.
+8 songs were added to broaden genre and mood coverage. Despite this, the catalog still skews toward Western pop-adjacent styles.
 
 **Gaps in the data:**
 - No hip-hop, R&B, classical, country, or electronic dance music.
@@ -68,39 +68,52 @@ No songs were added or removed from the starter dataset.
 ## 6. Limitations and Bias
 
 **Functional limitations:**
-- Only 10 songs — real systems operate on millions of tracks.
+- Only 18 songs — real systems operate on millions of tracks.
 - No learning: the model never updates based on what users actually liked or skipped.
 - No diversity control: the top-5 results can all be nearly identical songs if the catalog clusters around one style.
 - Binary acoustic flag is an oversimplification.
 
-**Bias risks:**
-- **Genre coverage bias**: Users who prefer jazz, hip-hop, classical, or any genre not in the catalog will never receive a genre-match bonus. Their recommendations are systematically weaker and less relevant than pop or lofi users.
-- **Mood vocabulary mismatch**: If a user's actual mood does not map to one of the 9 moods in the catalog, they lose the mood bonus entirely.
-- **Energy as a proxy for intensity**: High energy scores correlate with "intense" and "gym" vibes. Calm users who also want high-valence (cheerful) music may get pushed toward intense tracks instead of happy-but-mellow ones.
+**Bias risks discovered during experiments:**
+
+- **Genre string-match blindness**: The system treats "rock" and "metal" as completely unrelated because they are different strings. In the Deep Intense Rock stress test, *Iron Curtain* (metal, clearly rock-adjacent) ranked 4th tied with *Crowd Surfer* (hip-hop), despite metal being far closer to rock culturally and sonically. A real system would use genre embeddings or a genre hierarchy to handle this.
+
+- **Silent mood vocabulary failure**: When a user sets `mood="sad"` — a mood that does not exist in the catalog — the system never fires the mood bonus and gives no warning. The adversarial profile test exposed this completely: results 2–5 all scored ~1.4/7.5, separated only by tiny energy differences, because the system silently fell back to energy-only scoring. Users have no way to know their preference was ignored.
+
+- **Genre weight dominance creates a filter bubble**: With genre weighted at 3.0 out of a max 7.5, a song that merely matches genre but has the wrong mood and wrong energy still scores 3.0 — higher than any mood+energy combination without a genre match (max 3.5 but rare). This means non-pop users always get one pop song in their top 5 just because energy happens to be close. The weight-shift experiment confirmed this: halving the genre weight immediately reshuffled results toward mood-aligned songs.
+
+- **Mood vocabulary mismatch**: If a user's actual mood does not map to one of the catalog moods, they lose the mood bonus entirely with no fallback.
+
 - **No representation of listening context**: The system treats a late-night wind-down session identically to a morning workout session.
+
 - **If used at scale, feedback loops**: If VibeFinder were deployed and users only clicked on pop results (because pop dominates the catalog), a learning system trained on those clicks would double down on pop, further marginalizing other genres.
 
 ---
 
 ## 7. Evaluation
 
-**User profiles tested:**
+**User profiles tested (stress test with diverse profiles):**
 
-| Profile | Expected top result | Actual top result | Match? |
+| Profile | Top result | Score | Intuition match? | Surprise |
+|---|---|---|---|---|
+| High-Energy Pop (pop/happy/0.90) | Sunrise City | 6.38/7.5 | Yes | *Rooftop Lights* (indie pop) ranks #3 via mood+energy despite no genre match |
+| Chill Lofi (lofi/chill/0.38/acoustic) | Library Rain | 7.46/7.5 | Yes | *Rainy Blues* (blues) sneaks into #5 via acoustic bonus alone |
+| Deep Intense Rock (rock/intense/0.91) | Storm Runner | 6.50/7.5 | Yes | *Iron Curtain* (metal) ranks #4 tied with *Crowd Surfer* (hip-hop) — metal/rock adjacency invisible to string matching |
+| Adversarial (metal/sad/0.95) | Iron Curtain | 4.47/7.5 | Partial | Mood bonus never fires — "sad" not in catalog — system silently degrades to energy-only scoring |
+
+**Weight-shift experiment (genre=1.5, energy=3.0):**
+
+| Profile | Original #2 | Shifted #2 | Change |
 |---|---|---|---|
-| genre=pop, mood=happy, energy=0.82 | Sunrise City | Sunrise City (7.5/7.5) | Yes |
-| genre=lofi, mood=chill, energy=0.40 | Library Rain or Midnight Coding | Library Rain (6.93) | Yes |
-| genre=pop, mood=intense, energy=0.93 | Gym Hero | Gym Hero (7.5/7.5) | Yes |
-| genre=jazz, mood=relaxed, energy=0.37 | Coffee Shop Stories | Coffee Shop Stories (7.43) | Yes |
-| genre=ambient, mood=chill, energy=0.28 | Spacewalk Thoughts | Spacewalk Thoughts (7.5/7.5) | Yes |
+| High-Energy Pop | Gym Hero (pop, wrong mood) | Rooftop Lights (indie pop, right mood) | Mood now wins over same-genre wrong-mood |
+| Deep Intense Rock | Gym Hero | Gym Hero (unchanged #2) | Top 3–4 reshuffled by tiny energy margins |
 
-**What surprised me:** Even profiles for underrepresented genres (jazz, ambient) scored perfectly *within their genre*, because the catalog happened to include exactly one track matching each. The problem would become visible only when a user's genre is completely absent from the catalog.
+**What surprised me:** The adversarial profile was the most revealing test. Setting `mood="sad"` exposed that the system has no fallback behavior when a preference is unsatisfiable — it just silently scores lower across the board. A user would have no idea their mood was ignored. This is a silent failure mode that would be unacceptable in a production system.
 
 **Tests:** The starter tests in `tests/test_recommender.py` verify that:
 1. `recommend()` returns songs sorted so the best genre+mood match comes first.
 2. `explain_recommendation()` returns a non-empty string for any song.
 
-Both tests pass with the implemented scoring logic.
+Both tests pass.
 
 ---
 

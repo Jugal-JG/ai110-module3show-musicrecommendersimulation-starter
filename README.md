@@ -204,57 +204,234 @@ You can add more tests in `tests/test_recommender.py`.
 
 ---
 
-## CLI Output (Terminal Screenshot)
+## CLI Output — Stress Test with Diverse Profiles
 
-Running `python -m src.main` with the default `pop/happy/0.80` profile produces:
+Running `python -m src.main` with four distinct profiles (High-Energy Pop, Chill Lofi, Deep Intense Rock, and an adversarial edge case):
+
+### Profile 1: High-Energy Pop
 
 ```
-Loaded songs: 18
+============================================================
+  PROFILE: High-Energy Pop
+  genre='pop'  mood='happy'  energy=0.9  likes_acoustic=False
+============================================================
 
-User profile: genre='pop'  mood='happy'  energy=0.8  likes_acoustic=False
+  #1  Sunrise City  -  Neon Echo
+       Genre: pop  |  Mood: happy  |  Energy: 0.82
+       Score: 6.38 / 7.50
+       Why:
+         - genre match (+3.0)
+         - mood match (+2.0)
+         - energy proximity (+1.38)
 
-=======================================================
-  TOP RECOMMENDATIONS
-=======================================================
+  #2  Gym Hero  -  Max Pulse
+       Genre: pop  |  Mood: intense  |  Energy: 0.93
+       Score: 4.46 / 7.50
+       Why:
+         - genre match (+3.0)
+         - energy proximity (+1.46)
 
-#1  Sunrise City  -  Neon Echo
-    Genre: pop  |  Mood: happy  |  Energy: 0.82
-    Score: 6.47 / 7.50
-    Why recommended:
-      - genre match (+3.0)
-      - mood match (+2.0)
-      - energy proximity (+1.47)
+  #3  Rooftop Lights  -  Indigo Parade
+       Genre: indie pop  |  Mood: happy  |  Energy: 0.76
+       Score: 3.29 / 7.50
+       Why:
+         - mood match (+2.0)
+         - energy proximity (+1.29)
 
-#2  Gym Hero  -  Max Pulse
-    Genre: pop  |  Mood: intense  |  Energy: 0.93
-    Score: 4.30 / 7.50
-    Why recommended:
-      - genre match (+3.0)
-      - energy proximity (+1.3)
+  #4  Storm Runner  -  Voltline
+       Genre: rock  |  Mood: intense  |  Energy: 0.91
+       Score: 1.48 / 7.50
+       Why:
+         - energy proximity (+1.48)
 
-#3  Rooftop Lights  -  Indigo Parade
-    Genre: indie pop  |  Mood: happy  |  Energy: 0.76
-    Score: 3.44 / 7.50
-    Why recommended:
-      - mood match (+2.0)
-      - energy proximity (+1.44)
-
-#4  Crowd Surfer  -  Volt Pack
-    Genre: hip-hop  |  Mood: intense  |  Energy: 0.85
-    Score: 1.43 / 7.50
-    Why recommended:
-      - energy proximity (+1.43)
-
-#5  Night Drive Loop  -  Neon Echo
-    Genre: synthwave  |  Mood: moody  |  Energy: 0.75
-    Score: 1.42 / 7.50
-    Why recommended:
-      - energy proximity (+1.42)
-
-=======================================================
+  #5  Crowd Surfer  -  Volt Pack
+       Genre: hip-hop  |  Mood: intense  |  Energy: 0.85
+       Score: 1.43 / 7.50
+       Why:
+         - energy proximity (+1.43)
 ```
 
-The top result matches expectation: *Sunrise City* hits genre + mood + near-perfect energy for a pop/happy listener. Results 4 and 5 have no genre or mood match — they appear only because their energy is closest to 0.80 among the remaining songs.
+**Intuition check:** Feels right. *Sunrise City* is a perfect pop/happy match. *Gym Hero* ranks 2nd because it is pop but wrong mood — the genre bonus alone keeps it above songs with no genre match at all. *Rooftop Lights* at #3 is interesting: it is "indie pop" not "pop" so no genre bonus fires, but mood=happy + close energy lifts it above purely energy-matched songs. Results 4–5 have no genre or mood match — they appear only because no other song is closer in energy.
+
+---
+
+### Profile 2: Chill Lofi
+
+```
+============================================================
+  PROFILE: Chill Lofi
+  genre='lofi'  mood='chill'  energy=0.38  likes_acoustic=True
+============================================================
+
+  #1  Library Rain  -  Paper Lanterns
+       Genre: lofi  |  Mood: chill  |  Energy: 0.35
+       Score: 7.46 / 7.50
+       Why:
+         - genre match (+3.0)
+         - mood match (+2.0)
+         - energy proximity (+1.46)
+         - acoustic bonus (+1.0)
+
+  #2  Midnight Coding  -  LoRoom
+       Genre: lofi  |  Mood: chill  |  Energy: 0.42
+       Score: 7.44 / 7.50
+       Why:
+         - genre match (+3.0)
+         - mood match (+2.0)
+         - energy proximity (+1.44)
+         - acoustic bonus (+1.0)
+
+  #3  Focus Flow  -  LoRoom
+       Genre: lofi  |  Mood: focused  |  Energy: 0.4
+       Score: 5.47 / 7.50
+       Why:
+         - genre match (+3.0)
+         - energy proximity (+1.47)
+         - acoustic bonus (+1.0)
+
+  #4  Spacewalk Thoughts  -  Orbit Bloom
+       Genre: ambient  |  Mood: chill  |  Energy: 0.28
+       Score: 4.35 / 7.50
+       Why:
+         - mood match (+2.0)
+         - energy proximity (+1.35)
+         - acoustic bonus (+1.0)
+
+  #5  Rainy Blues  -  Delta Stone
+       Genre: blues  |  Mood: melancholic  |  Energy: 0.38
+       Score: 2.50 / 7.50
+       Why:
+         - energy proximity (+1.5)
+         - acoustic bonus (+1.0)
+```
+
+**Intuition check:** Top 3 all feel correct — these are the most "lofi study" tracks in the catalog. *Focus Flow* drops to #3 only because mood=focused ≠ chill, which is musically a very fine distinction. *Rainy Blues* at #5 is a mild surprise: it earns the acoustic bonus but shares no genre or mood — it appears because no other song beats its energy+acoustic combination.
+
+---
+
+### Profile 3: Deep Intense Rock
+
+```
+============================================================
+  PROFILE: Deep Intense Rock
+  genre='rock'  mood='intense'  energy=0.91  likes_acoustic=False
+============================================================
+
+  #1  Storm Runner  -  Voltline
+       Genre: rock  |  Mood: intense  |  Energy: 0.91
+       Score: 6.50 / 7.50
+       Why:
+         - genre match (+3.0)
+         - mood match (+2.0)
+         - energy proximity (+1.5)
+
+  #2  Gym Hero  -  Max Pulse
+       Genre: pop  |  Mood: intense  |  Energy: 0.93
+       Score: 3.47 / 7.50
+       Why:
+         - mood match (+2.0)
+         - energy proximity (+1.47)
+
+  #3  Crowd Surfer  -  Volt Pack
+       Genre: hip-hop  |  Mood: intense  |  Energy: 0.85
+       Score: 3.41 / 7.50
+       Why:
+         - mood match (+2.0)
+         - energy proximity (+1.41)
+
+  #4  Iron Curtain  -  Breach Protocol
+       Genre: metal  |  Mood: intense  |  Energy: 0.97
+       Score: 3.41 / 7.50
+       Why:
+         - mood match (+2.0)
+         - energy proximity (+1.41)
+
+  #5  Festival Lights  -  Solar Rush
+       Genre: edm  |  Mood: euphoric  |  Energy: 0.96
+       Score: 1.43 / 7.50
+       Why:
+         - energy proximity (+1.43)
+```
+
+**Intuition check:** *Storm Runner* at #1 is perfect — full marks on genre + mood + energy. The surprise is that *Iron Curtain* (metal, intense) ranks #4 tied with *Crowd Surfer* (hip-hop, intense) even though metal is far closer to rock than hip-hop is. The genre weight does not know that "rock" and "metal" are musically adjacent — it treats them as completely unrelated strings. This is a real limitation.
+
+---
+
+### Profile 4: Adversarial (high energy + mood not in catalog)
+
+```
+============================================================
+  PROFILE: Adversarial (high energy + sad mood)
+  genre='metal'  mood='sad'  energy=0.95  likes_acoustic=False
+============================================================
+
+  #1  Iron Curtain  -  Breach Protocol
+       Genre: metal  |  Mood: intense  |  Energy: 0.97
+       Score: 4.47 / 7.50
+       Why:
+         - genre match (+3.0)
+         - energy proximity (+1.47)
+
+  #2  Festival Lights  -  Solar Rush
+       Genre: edm  |  Mood: euphoric  |  Energy: 0.96
+       Score: 1.48 / 7.50
+       Why:
+         - energy proximity (+1.48)
+
+  #3  Gym Hero  -  Max Pulse
+       Genre: pop  |  Mood: intense  |  Energy: 0.93
+       Score: 1.47 / 7.50
+       Why:
+         - energy proximity (+1.47)
+
+  #4  Storm Runner  -  Voltline
+       Genre: rock  |  Mood: intense  |  Energy: 0.91
+       Score: 1.44 / 7.50
+       Why:
+         - energy proximity (+1.44)
+
+  #5  Crowd Surfer  -  Volt Pack
+       Genre: hip-hop  |  Mood: intense  |  Energy: 0.85
+       Score: 1.35 / 7.50
+       Why:
+         - energy proximity (+1.35)
+```
+
+**Adversarial finding:** The mood bonus never fires because "sad" does not exist as a mood value in the catalog. The system silently falls back to genre + energy scoring only — it cannot tell the user their mood preference was ignored. Results 2–5 score nearly identically (~1.4) because only energy proximity separates them. This exposes two weaknesses: the **vocabulary gap** (moods in a user profile must exactly match catalog moods) and the **silent failure** (no warning is given when a preference is unmatched).
+
+---
+
+## Weight-Shift Experiment (Step 3)
+
+**Change tested:** Halve genre weight (3.0 → 1.5) and double energy weight (1.5 → 3.0). Max score stays 7.5.
+
+**Hypothesis:** Energy will dominate, causing songs with matching genre but wrong energy to drop in rank, while songs with no genre match but very close energy will rise.
+
+```
+=======================================================
+  EXPERIMENT (genre=1.5, energy=3.0): High-Energy Pop
+=======================================================
+  #1  Sunrise City  -  Neon Echo         Score: 6.26  (genre+mood+energy)
+  #2  Rooftop Lights  -  Indigo Parade   Score: 4.58  (mood+energy — no genre match)
+  #3  Gym Hero  -  Max Pulse             Score: 4.41  (genre+energy — no mood match)
+
+=======================================================
+  EXPERIMENT (genre=1.5, energy=3.0): Deep Intense Rock
+=======================================================
+  #1  Storm Runner  -  Voltline          Score: 6.50  (genre+mood+perfect energy)
+  #2  Gym Hero  -  Max Pulse             Score: 4.94  (mood+near energy — pop, not rock)
+  #3  Crowd Surfer  -  Volt Pack         Score: 4.82  (mood+near energy — hip-hop, not rock)
+  #4  Iron Curtain  -  Breach Protocol   Score: 4.82  (mood+near energy — metal, not rock)
+```
+
+**What changed vs original weights:**
+
+| | Original (genre=3.0, energy=1.5) | Shifted (genre=1.5, energy=3.0) |
+|---|---|---|
+| Pop profile #2 | Gym Hero (pop, wrong mood) | Rooftop Lights (indie pop, right mood) |
+| Rock profile #3 | Crowd Surfer tied with Iron Curtain | Gym Hero jumps above both |
+
+**Conclusion:** Halving genre weight caused mood to matter much more relatively. *Rooftop Lights* (indie pop, happy) jumped from #3 to #2 for the pop profile because its mood match + high energy proximity now outweigh the genre miss. The genre weight is the single biggest lever in this system — reducing it makes the recommender feel more "mood-driven" but less "genre-loyal."
 
 ---
 
