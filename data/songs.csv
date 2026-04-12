@@ -1,19 +1,19 @@
-id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness
-1,Sunrise City,Neon Echo,pop,happy,0.82,118,0.84,0.79,0.18
-2,Midnight Coding,LoRoom,lofi,chill,0.42,78,0.56,0.62,0.71
-3,Storm Runner,Voltline,rock,intense,0.91,152,0.48,0.66,0.10
-4,Library Rain,Paper Lanterns,lofi,chill,0.35,72,0.60,0.58,0.86
-5,Gym Hero,Max Pulse,pop,intense,0.93,132,0.77,0.88,0.05
-6,Spacewalk Thoughts,Orbit Bloom,ambient,chill,0.28,60,0.65,0.41,0.92
-7,Coffee Shop Stories,Slow Stereo,jazz,relaxed,0.37,90,0.71,0.54,0.89
-8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22
-9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78
-10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35
-11,Golden Hour,R. Bridges,r&b,romantic,0.62,95,0.78,0.71,0.45
-12,Crowd Surfer,Volt Pack,hip-hop,intense,0.85,140,0.65,0.91,0.08
-13,Porch Swing,Clay Roads,country,nostalgic,0.45,88,0.73,0.63,0.82
-14,Rainy Blues,Delta Stone,blues,melancholic,0.38,76,0.42,0.49,0.88
-15,Velvet Morning,Aria Bloom,classical,peaceful,0.22,58,0.68,0.31,0.95
-16,Festival Lights,Solar Rush,edm,euphoric,0.96,128,0.82,0.94,0.04
-17,Back Roads,Ember Lane,folk,nostalgic,0.33,82,0.71,0.55,0.91
-18,Iron Curtain,Breach Protocol,metal,intense,0.97,168,0.31,0.58,0.03
+id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness,popularity,release_decade,mood_tags,explicit,language
+1,Sunrise City,Neon Echo,pop,happy,0.82,118,0.84,0.79,0.18,78,2020s,"upbeat,feel-good,summery",no,english
+2,Midnight Coding,LoRoom,lofi,chill,0.42,78,0.56,0.62,0.71,65,2020s,"calm,studious,ambient",no,english
+3,Storm Runner,Voltline,rock,intense,0.91,152,0.48,0.66,0.10,72,2010s,"aggressive,driving,powerful",no,english
+4,Library Rain,Paper Lanterns,lofi,chill,0.35,72,0.60,0.58,0.86,60,2020s,"calm,rainy,studious",no,english
+5,Gym Hero,Max Pulse,pop,intense,0.93,132,0.77,0.88,0.05,85,2020s,"aggressive,motivating,euphoric",no,english
+6,Spacewalk Thoughts,Orbit Bloom,ambient,chill,0.28,60,0.65,0.41,0.92,55,2010s,"peaceful,dreamy,ambient",no,english
+7,Coffee Shop Stories,Slow Stereo,jazz,relaxed,0.37,90,0.71,0.54,0.89,58,2010s,"calm,nostalgic,warm",no,english
+8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22,70,2020s,"dark,nostalgic,cinematic",no,english
+9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78,63,2020s,"calm,studious,ambient",no,english
+10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35,74,2020s,"upbeat,feel-good,romantic",no,english
+11,Golden Hour,R. Bridges,r&b,romantic,0.62,95,0.78,0.71,0.45,80,2020s,"romantic,warm,sensual",no,english
+12,Crowd Surfer,Volt Pack,hip-hop,intense,0.85,140,0.65,0.91,0.08,88,2020s,"aggressive,euphoric,motivating",yes,english
+13,Porch Swing,Clay Roads,country,nostalgic,0.45,88,0.73,0.63,0.82,62,2010s,"nostalgic,warm,feel-good",no,english
+14,Rainy Blues,Delta Stone,blues,melancholic,0.38,76,0.42,0.49,0.88,50,2000s,"melancholic,dark,nostalgic",no,english
+15,Velvet Morning,Aria Bloom,classical,peaceful,0.22,58,0.68,0.31,0.95,48,2010s,"peaceful,dreamy,calm",no,english
+16,Festival Lights,Solar Rush,edm,euphoric,0.96,128,0.82,0.94,0.04,91,2020s,"euphoric,motivating,upbeat",no,english
+17,Back Roads,Ember Lane,folk,nostalgic,0.33,82,0.71,0.55,0.91,54,2010s,"nostalgic,warm,calm",no,english
+18,Iron Curtain,Breach Protocol,metal,intense,0.97,168,0.31,0.58,0.03,76,2010s,"aggressive,dark,powerful",yes,english

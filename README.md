@@ -457,6 +457,95 @@ You will go deeper on this in your model card.
 
 ---
 
+## Challenge 1: Advanced Song Features
+
+Five new attributes were added to `data/songs.csv` and wired into the scoring logic in `src/recommender.py`.
+
+### New columns in `data/songs.csv`
+
+| Column | Type | Description | Example |
+|---|---|---|---|
+| `popularity` | int 0–100 | Chart/stream popularity score | 85 |
+| `release_decade` | string | Era the song was released | "2020s" |
+| `mood_tags` | comma-separated strings | Detailed emotional descriptors beyond the single mood label | "upbeat,feel-good,summery" |
+| `explicit` | yes / no | Whether the track contains explicit content | no |
+| `language` | string | Primary language of the track | english |
+
+### New scoring rules (added to `score_song` and `score_song_with_mode`)
+
+| Rule | Points | When it fires |
+|---|---|---|
+| Popularity bonus | +1.0 | `song.popularity >= user.min_popularity + 20` — rewards genuinely popular tracks |
+| Decade match | +1.0 | `song.release_decade == user.preferred_decade` |
+| Mood tag overlap | +1.0 | At least one of the user's `liked_mood_tags` appears in the song's `mood_tags` list |
+
+### New hard filters (applied before scoring — filtered songs are excluded entirely)
+
+- `explicit_ok=False` → any song with `explicit=yes` is removed from results
+- `min_popularity` → any song below this score is excluded
+
+The new max possible score is **10.5** (7.5 original + 3.0 from the three new bonus rules).
+
+### New `UserProfile` fields
+
+```python
+min_popularity:   int       = 0       # songs below this are filtered out
+preferred_decade: str       = ""      # "2020s", "2010s", etc.
+liked_mood_tags:  List[str] = []      # e.g. ["upbeat", "calm", "aggressive"]
+explicit_ok:      bool      = True    # False removes explicit tracks
+```
+
+---
+
+## Challenge 2: Multiple Scoring Modes
+
+Three distinct ranking strategies are implemented using the **Strategy pattern** in `src/recommender.py`. Each mode re-weights the four core factors (genre, mood, energy, acousticness) without changing the scoring structure. Switching modes in `main.py` is a single argument change.
+
+### The three modes
+
+| Mode key | Genre | Mood | Energy | Acoustic | Best for |
+|---|---|---|---|---|---|
+| `genre-first` | 3.0 | 2.0 | 1.5 | 1.0 | Users loyal to one genre |
+| `mood-first` | 1.5 | 3.5 | 1.5 | 1.0 | Users who hop genres but always want the same vibe |
+| `energy-focused` | 1.0 | 1.0 | 4.0 | 1.0 | Activity-based listening (gym, study, sleep) |
+
+### How the Strategy pattern works
+
+All modes live in a single `SCORING_MODES` dict in `recommender.py`. Adding a new mode = adding one dict entry. No other code changes needed.
+
+```python
+SCORING_MODES = {
+    "genre-first":    {"genre_weight": 3.0, "mood_weight": 2.0, "energy_weight": 1.5, ...},
+    "mood-first":     {"genre_weight": 1.5, "mood_weight": 3.5, "energy_weight": 1.5, ...},
+    "energy-focused": {"genre_weight": 1.0, "mood_weight": 1.0, "energy_weight": 4.0, ...},
+}
+```
+
+`recommend_songs(user_prefs, songs, k=5, mode="mood-first")` — the caller picks the strategy.
+
+### Mode comparison — High-Energy Pop profile (top 3 per mode)
+
+```
+--- Genre-First (genre=3.0, mood=2.0, energy=1.5) ---
+  #1 Sunrise City    (pop/happy)     Score: 8.38  - genre+mood+energy+decade+tags
+  #2 Gym Hero        (pop/intense)   Score: 7.46  - genre+energy+popularity+decade+tags
+  #3 Rooftop Lights  (indie pop/happy) Score: 5.29  - mood+energy+decade+tags
+
+--- Mood-First (mood=3.5, genre=1.5, energy=1.5) ---
+  #1 Sunrise City    (pop/happy)     Score: 8.38  - genre+mood+energy+decade+tags
+  #2 Rooftop Lights  (indie pop/happy) Score: 6.79  - mood+energy+decade+tags  ← jumped from #3
+  #3 Gym Hero        (pop/intense)   Score: 5.96  - genre+energy+popularity+decade+tags
+
+--- Energy-Focused (energy=4.0, genre=1.0, mood=1.0) ---
+  #1 Gym Hero        (pop/intense)   Score: 7.88  - genre+energy+popularity+decade+tags  ← now #1
+  #2 Sunrise City    (pop/happy)     Score: 7.68  - genre+mood+energy+decade+tags
+  #3 Crowd Surfer    (hip-hop/intense) Score: 6.80  - energy+popularity+decade+tags  ← no genre/mood match
+```
+
+**Key insight:** In `genre-first`, *Gym Hero* (pop, wrong mood) ranks #2 because the genre bonus alone is worth 3.0. In `mood-first`, *Rooftop Lights* (indie pop, right mood) overtakes it because mood is now worth 3.5. In `energy-focused`, *Crowd Surfer* (hip-hop) reaches #3 despite no genre or mood match — its energy of 0.85 is close enough to earn ~3.8 energy points, plus popularity and decade bonuses.
+
+---
+
 ## Reflection
 
 Read and complete `model_card.md`:
