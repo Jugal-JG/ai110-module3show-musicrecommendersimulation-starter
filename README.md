@@ -17,7 +17,7 @@ This project simulates a **content-based music recommender**. Given a user's tas
 
 ## How The System Works
 
-Real-world streaming platforms like Spotify or YouTube use two main strategies to surface new music. **Collaborative filtering** says "people who liked the same songs you did also liked these — so you probably will too." **Content-based filtering** says "you like energetic pop with a happy vibe, so let's find songs that actually have those attributes." This simulation uses content-based filtering because it is transparent: you can read the scoring formula and understand exactly why a song was recommended. The system prioritizes genre and mood alignment first (the strongest signals of taste), then rewards songs whose energy level is close to the user's target, and finally gives a bonus to acoustic tracks for users who prefer that texture.
+Real-world streaming platforms like Spotify or YouTube use two main strategies to surface new music. **Collaborative filtering** says "people who liked the same songs you did also liked these so you probably will too." **Content-based filtering** says "you like energetic pop with a happy vibe, so let's find songs that actually have those attributes." This simulation uses content-based filtering because it is transparent: you can read the scoring formula and understand exactly why a song was recommended. The system prioritizes genre and mood alignment first (the strongest signals of taste), then rewards songs whose energy level is close to the user's target, and finally gives a bonus to acoustic tracks for users who prefer that texture.
 
 ### `Song` features used
 
@@ -39,16 +39,76 @@ Real-world streaming platforms like Spotify or YouTube use two main strategies t
 | `target_energy` | float 0–1 | How energetic the user wants the music to feel |
 | `likes_acoustic` | bool | Whether the user has a preference for acoustic-heavy tracks |
 
-### Scoring formula (per song)
+### Algorithm Recipe (Finalized)
+
+The scoring recipe below is the "algorithm recipe" — the specific set of rules the program uses to decide which songs to recommend. Each rule has a weight that reflects how strongly that feature should influence the result.
+
+| Rule | Points | Reasoning |
+|---|---|---|
+| Genre match | +3.0 | Genre is the single strongest signal of musical taste — a pop fan rarely wants jazz |
+| Mood match | +2.0 | Mood drives the listening experience almost as strongly as genre |
+| Energy proximity | +0.0 to +1.5 | Scored as `1.5 × (1 − |target_energy − song.energy|)` — a perfect energy match earns the full 1.5; a completely opposite energy earns 0 |
+| Acoustic bonus | +1.0 | Only awarded when `likes_acoustic = True` AND `song.acousticness ≥ 0.6` |
+| **Maximum possible** | **7.5** | A song that matches genre + mood + energy perfectly + is acoustic |
+
+**Scoring formula (per song):**
 
 ```
-score = genre_match * 3.0
-      + mood_match * 2.0
-      + 1.5 * (1 - |target_energy - song.energy|)
-      + acoustic_bonus * 1.0   # only if likes_acoustic=True and acousticness >= 0.6
+score = genre_match × 3.0
+      + mood_match × 2.0
+      + 1.5 × (1 − |target_energy − song.energy|)
+      + acoustic_bonus × 1.0   # only if likes_acoustic=True and acousticness >= 0.6
 ```
 
 Songs are ranked by score descending; the top `k` are returned as recommendations.
+
+**Potential biases in this recipe:**
+
+- Genre is weighted 3× higher than mood. This means the system will over-prioritize genre — it can surface a song that matches genre but feels emotionally wrong (e.g., a "pop/intense" song recommended to a "pop/relaxed" user). A user who listens across many genres but always wants a calm mood will be poorly served.
+- Energy proximity rewards closeness but not direction — a song slightly too energetic and a song slightly too calm are treated identically, even though a user might strongly prefer one direction over the other.
+- The acoustic bonus is binary. Someone who "slightly" likes acoustic music gets the same reward as someone who exclusively listens to acoustic tracks.
+
+### Data Flow Diagram
+
+The complete pipeline from input to output:
+
+```
+Input (User Preferences)
+  favorite_genre, favorite_mood, target_energy, likes_acoustic
+         │
+         ▼
+Load songs.csv  ──►  18-song catalog (list of dicts)
+         │
+         ▼
+┌─────────────────────────────────────────────┐
+│  For each song in the catalog:              │
+│    score = genre_match × 3.0               │
+│           + mood_match × 2.0               │
+│           + 1.5 × energy_proximity         │
+│           + acoustic_bonus × 1.0           │
+└─────────────────────────────────────────────┘
+         │
+         ▼
+Sort all (song, score) pairs — highest score first
+         │
+         ▼
+Output: Top K Recommendations
+  song title, artist, score, explanation
+```
+
+### Mermaid.js Flowchart
+
+```mermaid
+flowchart TD
+    A["User Preferences\n(favorite_genre, favorite_mood,\ntarget_energy, likes_acoustic)"] --> B["load_songs\ndata/songs.csv"]
+    B --> C["18-song catalog"]
+    C --> D{"For each song\nin catalog"}
+    D --> E["Scoring Rule\nscore = genre×3.0 + mood×2.0\n+ 1.5×energy_proximity\n+ acoustic_bonus×1.0"]
+    E --> F["Collect scored songs\nlist of (song, score) pairs"]
+    F --> G["Ranking Rule\nSort by score descending"]
+    G --> H["Return Top K songs"]
+    H --> I["Display: title, artist,\nscore, explanation"]
+```
 
 ### Why we need both a Scoring Rule and a Ranking Rule
 
